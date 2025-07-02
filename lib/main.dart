@@ -10,17 +10,12 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 
-// void main() {
-//   initMediaKit(); // Initialise just_audio_media_kit for Linux/Windows.
-//   // Enable gapless playback on Linux/Windows (experimental):
-//   // JustAudioMediaKit.prefetchPlaylist = true;
-//   runApp(const MyApp());
-// }
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await JustAudioBackground.init(
     androidNotificationChannelId: 'com.jimmyliow.dictation_gym.channel.audio',
-    androidNotificationChannelName: 'Audio playback',
+    androidNotificationChannelName: 'Dictation Gym',
     androidNotificationOngoing: true,
   );
   initMediaKit(); // Initialise just_audio_media_kit for Linux/Windows.
@@ -44,14 +39,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       end: const Duration(seconds: 3, milliseconds: 680),
       child: AudioSource.uri(Uri.parse(
           "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3")),
-      // tag: AudioMetadata(
-      //   album: "Science Friday",
-      //   title: "21-getting-a-visa($index)",
-      //   artwork:
-      //   "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-      // ),
       tag: MediaItem(
-        // Specify a unique ID for each media item:
         id: '1($index)',
         // Metadata to display in the notification:
         album: "Album name",
@@ -67,14 +55,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       end: const Duration(seconds: 4, milliseconds: 960),
       child: AudioSource.uri(Uri.parse(
           "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3")),
-      // tag: AudioMetadata(
-      //   album: "Science Friday",
-      //   title: "21-getting-a-visa($index)",
-      //   artwork:
-      //   "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-      // ),
       tag: MediaItem(
-        // Specify a unique ID for each media item:
         id: '2($index)',
         // Metadata to display in the notification:
         album: "Album name",
@@ -124,20 +105,18 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     });
   }
 
-
   void _showItemFinished(int? index) async {
     if (index == null) return;
 
     final sequence = _player.sequence;
     if (index >= sequence.length) return;
 
-    if (index == 3) {
+    if (index == 2 || index == 11) {
       await Future.delayed(Duration.zero);
-      await _player.setSpeed(0.6); // 安全修改速度
-    }
-    if (index == 6) {
+      await _player.setSpeed(0.6);
+    } else if (index == 5 || index == 14) {
       await Future.delayed(Duration.zero);
-      await _player.setSpeed(1.0); // 安全修改速度
+      await _player.setSpeed(1.0);
     }
 
     final source = sequence[index];
@@ -159,12 +138,12 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
+    // if (state == AppLifecycleState.paused) {
       // Release the player's resources when not in use. We use "stop" so that
       // if the app resumes later, it will still remember what position to
       // resume from.
-      _player.stop();
-    }
+      // _player.stop();
+    // }
   }
 
   Stream<PositionData> get _positionDataStream =>
@@ -356,7 +335,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
-      type: FileType.audio, // FileType.video/FileType.any
+      type: FileType.audio,
     );
     if (result == null || result.files.isEmpty) return null;
 
@@ -370,12 +349,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
       AudioSource source = AudioSource.uri(
         Uri.file(file.path!),
-        // tag: AudioMetadata(
-        //   album: "Local Audio",
-        //   title: fileName,
-        //   artwork:
-        //       "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-        // ),
         tag: MediaItem(
           id: fileName,
           album: "Science Friday",
@@ -501,16 +474,4 @@ class ControlButtons extends StatelessWidget {
       ],
     );
   }
-}
-
-class AudioMetadata {
-  final String album;
-  final String title;
-  final String artwork;
-
-  AudioMetadata({
-    required this.album,
-    required this.title,
-    required this.artwork,
-  });
 }
