@@ -3,18 +3,28 @@ import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:dictation_gym/common.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 
-void main() {
+// void main() {
+//   initMediaKit(); // Initialise just_audio_media_kit for Linux/Windows.
+//   // Enable gapless playback on Linux/Windows (experimental):
+//   // JustAudioMediaKit.prefetchPlaylist = true;
+//   runApp(const MyApp());
+// }
+
+Future<void> main() async {
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.jimmyliow.dictation_gym.channel.audio',
+    androidNotificationChannelName: 'Audio playback',
+    androidNotificationOngoing: true,
+  );
   initMediaKit(); // Initialise just_audio_media_kit for Linux/Windows.
-  // Enable gapless playback on Linux/Windows (experimental):
-  // JustAudioMediaKit.prefetchPlaylist = true;
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -26,7 +36,53 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   late AudioPlayer _player;
-  late final List<AudioSource> _playlist = [];
+
+  late final List<AudioSource> _playlist = [...List.generate(9, (index) {
+    return ClippingAudioSource(
+      // 00:00:01.710 - 00:00:03.680
+      start: const Duration(seconds: 1, milliseconds: 710),
+      end: const Duration(seconds: 3, milliseconds: 680),
+      child: AudioSource.uri(Uri.parse(
+          "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3")),
+      // tag: AudioMetadata(
+      //   album: "Science Friday",
+      //   title: "21-getting-a-visa($index)",
+      //   artwork:
+      //   "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+      // ),
+      tag: MediaItem(
+        // Specify a unique ID for each media item:
+        id: '1($index)',
+        // Metadata to display in the notification:
+        album: "Album name",
+        title: "Does it take long to get a visa?($index)",
+        artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
+      )
+    );
+  }),
+    ...List.generate(9, (index) {
+    return ClippingAudioSource(
+      // [00:00:03.710][00:00:04.960]
+      start: const Duration(seconds: 3, milliseconds: 710),
+      end: const Duration(seconds: 4, milliseconds: 960),
+      child: AudioSource.uri(Uri.parse(
+          "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3")),
+      // tag: AudioMetadata(
+      //   album: "Science Friday",
+      //   title: "21-getting-a-visa($index)",
+      //   artwork:
+      //   "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+      // ),
+      tag: MediaItem(
+        // Specify a unique ID for each media item:
+        id: '2($index)',
+        // Metadata to display in the notification:
+        album: "Album name",
+        title: "It depends on the season.($index)",
+        artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
+      )
+    );
+  })];
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
@@ -47,7 +103,9 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _player.errorStream.listen((e) {
       print('A stream error occurred: $e');
     });
+
     try {
+      _player.setLoopMode(LoopMode.off);
       await _player.setAudioSources(_playlist);
     } on PlayerException catch (e) {
       // Catch load errors: 404, invalid url...
@@ -66,15 +124,27 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     });
   }
 
-  void _showItemFinished(int? index) {
+
+  void _showItemFinished(int? index) async {
     if (index == null) return;
+
     final sequence = _player.sequence;
     if (index >= sequence.length) return;
+
+    if (index == 3) {
+      await Future.delayed(Duration.zero);
+      await _player.setSpeed(0.6); // 安全修改速度
+    }
+    if (index == 6) {
+      await Future.delayed(Duration.zero);
+      await _player.setSpeed(1.0); // 安全修改速度
+    }
+
     final source = sequence[index];
-    final metadata = source.tag as AudioMetadata;
+    final metadata = source.tag as MediaItem;
     _scaffoldMessengerKey.currentState?.showSnackBar(
       SnackBar(
-        content: Text('Finished playing ${metadata.title}'),
+        content: Text('Finished playing ${metadata.title} - $index'),
         duration: const Duration(seconds: 1),
       ),
     );
@@ -240,7 +310,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       children: [Text('Empty')],
                     );
                   }
-                  final metadata = state!.currentSource!.tag as AudioMetadata;
+                  final metadata = state!.currentSource!.tag as MediaItem;
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [Text(metadata.title)],
@@ -263,7 +333,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   );
                 },
               ),
-              const SizedBox(height: 8.0),
             ],
           ),
         ),
@@ -301,11 +370,18 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
       AudioSource source = AudioSource.uri(
         Uri.file(file.path!),
-        tag: AudioMetadata(
-          album: "Local Audio",
+        // tag: AudioMetadata(
+        //   album: "Local Audio",
+        //   title: fileName,
+        //   artwork:
+        //       "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+        // ),
+        tag: MediaItem(
+          id: fileName,
+          album: "Science Friday",
           title: fileName,
-          artwork:
-              "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+          artUri: Uri.parse(
+              "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg"),
         ),
       );
 
@@ -412,9 +488,9 @@ class ControlButtons extends StatelessWidget {
               showSliderDialog(
                 context: context,
                 title: "Adjust speed",
-                divisions: 30,
-                min: 0.1,
-                max: 3.0,
+                divisions: 20,
+                min: 0.2,
+                max: 2.0,
                 value: player.speed,
                 stream: player.speedStream,
                 onChanged: player.setSpeed,
