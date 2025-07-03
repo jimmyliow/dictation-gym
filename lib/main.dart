@@ -153,16 +153,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // if (state == AppLifecycleState.paused) {
-      // Release the player's resources when not in use. We use "stop" so that
-      // if the app resumes later, it will still remember what position to
-      // resume from.
-      // _player.stop();
-    // }
-  }
-
   Stream<PositionData> get _positionDataStream =>
       Rx.combineLatest3<Duration, Duration, Duration?, PositionData>(
         _player.positionStream,
@@ -182,7 +172,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
           title: const Text('Dictation Gym'),
           actions: <Widget>[
             IconButton(
-              icon: const Icon(Icons.article_outlined),
+              icon: const Icon(Icons.dehaze),
               tooltip: 'Setup',
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -195,7 +185,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
-            // mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
                 children: [
@@ -225,6 +214,13 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       );
                     },
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.clear_all),
+                    tooltip: 'Clear All',
+                    onPressed: () {
+                      _player.setAudioSources([]);
+                    },
+                  ),
                   Expanded(
                     child: Text(
                       "Playlist",
@@ -252,7 +248,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   ),
                 ],
               ),
-
               SizedBox(
                 height: 240.0,
                 child: StreamBuilder<SequenceState?>(
@@ -397,9 +392,9 @@ class ControlButtons extends StatelessWidget {
             showSliderDialog(
               context: context,
               title: "Adjust volume",
-              divisions: 10,
+              divisions: 20,
               min: 0.0,
-              max: 1.0,
+              max: 2.0,
               value: player.volume,
               stream: player.volumeStream,
               onChanged: player.setVolume,
