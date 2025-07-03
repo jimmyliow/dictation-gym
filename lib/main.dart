@@ -31,20 +31,20 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   late AudioPlayer _player;
-
+  final UriAudioSource gettingAVisa = AudioSource.uri(Uri.parse(
+  "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3"));
   late final List<AudioSource> _playlist = [...List.generate(9, (index) {
     return ClippingAudioSource(
       // 00:00:01.710 - 00:00:03.680
       start: const Duration(seconds: 1, milliseconds: 710),
       end: const Duration(seconds: 3, milliseconds: 680),
-      child: AudioSource.uri(Uri.parse(
-          "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3")),
+      child: gettingAVisa,
       tag: MediaItem(
         id: '1($index)',
         // Metadata to display in the notification:
-        album: "Album name",
+        // album: "Album name",
         title: "Does it take long to get a visa?($index)",
-        artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
+        // artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
       )
     );
   }),
@@ -53,17 +53,31 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       // [00:00:03.710][00:00:04.960]
       start: const Duration(seconds: 3, milliseconds: 710),
       end: const Duration(seconds: 4, milliseconds: 960),
-      child: AudioSource.uri(Uri.parse(
-          "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3")),
+      child: gettingAVisa,
       tag: MediaItem(
         id: '2($index)',
         // Metadata to display in the notification:
-        album: "Album name",
+        // album: "Album name",
         title: "It depends on the season.($index)",
-        artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
+        // artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
       )
     );
-  })];
+  }),
+    ...List.generate(9, (index) {
+      return ClippingAudioSource(
+        // 00:00:04.960][00:00:06.960
+          start: const Duration(seconds: 4, milliseconds: 960),
+          end: const Duration(seconds: 6, milliseconds: 960),
+          child: gettingAVisa,
+          tag: MediaItem(
+            id: '3($index)',
+            // Metadata to display in the notification:
+            // album: "Album name",
+            title: "Anywhere from one month to two months.($index)",
+            // artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
+          )
+      );
+    })];
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
@@ -106,15 +120,18 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   void _showItemFinished(int? index) async {
+    final sequence = _player.sequence;
+
     if (index == null) return;
 
-    final sequence = _player.sequence;
     if (index >= sequence.length) return;
 
-    if (index == 2 || index == 11) {
+    // aₙ = 9n + 2
+    // x >= 2 && (x - 2) % 9 === 0;
+    if (index >= 2 && (index - 2) % 9 == 0) {
       await Future.delayed(Duration.zero);
       await _player.setSpeed(0.6);
-    } else if (index == 5 || index == 14) {
+    } else if (index >= 5 && (index - 5) % 9 == 0) {
       await Future.delayed(Duration.zero);
       await _player.setSpeed(1.0);
     }
@@ -351,10 +368,10 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         Uri.file(file.path!),
         tag: MediaItem(
           id: fileName,
-          album: "Science Friday",
+          // album: "Science Friday",
           title: fileName,
-          artUri: Uri.parse(
-              "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg"),
+          // artUri: Uri.parse(
+          //     "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg"),
         ),
       );
 
