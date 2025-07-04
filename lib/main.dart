@@ -31,53 +31,63 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   late AudioPlayer _player;
+  Duration clipStartDuration = Duration.zero;
+  Duration clipEndDuration = Duration.zero;
   final UriAudioSource gettingAVisa = AudioSource.uri(Uri.parse(
   "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3"));
-  late final List<AudioSource> _playlist = [...List.generate(9, (index) {
-    return ClippingAudioSource(
-      // 00:00:01.710 - 00:00:03.680
-      start: const Duration(seconds: 1, milliseconds: 710),
-      end: const Duration(seconds: 3, milliseconds: 680),
-      child: gettingAVisa,
+  late final List<AudioSource> _playlist = [
+    AudioSource.uri(Uri.parse("https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3"),
       tag: MediaItem(
-        id: '1($index)',
-        // Metadata to display in the notification:
-        // album: "Album name",
-        title: "Does it take long to get a visa?($index)",
-        // artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
-      )
-    );
-  }),
-    ...List.generate(9, (index) {
-    return ClippingAudioSource(
-      // [00:00:03.710][00:00:04.960]
-      start: const Duration(seconds: 3, milliseconds: 710),
-      end: const Duration(seconds: 4, milliseconds: 960),
-      child: gettingAVisa,
-      tag: MediaItem(
-        id: '2($index)',
-        // Metadata to display in the notification:
-        // album: "Album name",
-        title: "It depends on the season.($index)",
-        // artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
-      )
-    );
-  }),
-    ...List.generate(9, (index) {
-      return ClippingAudioSource(
-        // 00:00:04.960][00:00:06.960
-          start: const Duration(seconds: 4, milliseconds: 960),
-          end: const Duration(seconds: 6, milliseconds: 960),
-          child: gettingAVisa,
-          tag: MediaItem(
-            id: '3($index)',
-            // Metadata to display in the notification:
-            // album: "Album name",
-            title: "Anywhere from one month to two months.($index)",
-            // artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
-          )
-      );
-    })];
+        id: "21-getting-a-visa",
+        title: "21-getting-a-visa",
+      ),
+    )
+  //   ...List.generate(9, (index) {
+  //   return ClippingAudioSource(
+  //     // 00:00:01.710 - 00:00:03.680
+  //     start: const Duration(seconds: 1, milliseconds: 710),
+  //     end: const Duration(seconds: 3, milliseconds: 680),
+  //     child: gettingAVisa,
+  //     tag: MediaItem(
+  //       id: '1($index)',
+  //       // Metadata to display in the notification:
+  //       // album: "Album name",
+  //       title: "Does it take long to get a visa?($index)",
+  //       // artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
+  //     )
+  //   );
+  // }),
+  //   ...List.generate(9, (index) {
+  //   return ClippingAudioSource(
+  //     // [00:00:03.710][00:00:04.960]
+  //     start: const Duration(seconds: 3, milliseconds: 710),
+  //     end: const Duration(seconds: 4, milliseconds: 960),
+  //     child: gettingAVisa,
+  //     tag: MediaItem(
+  //       id: '2($index)',
+  //       // Metadata to display in the notification:
+  //       // album: "Album name",
+  //       title: "It depends on the season.($index)",
+  //       // artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
+  //     )
+  //   );
+  // }),
+  //   ...List.generate(9, (index) {
+  //     return ClippingAudioSource(
+  //       // 00:00:04.960][00:00:06.960
+  //         start: const Duration(seconds: 4, milliseconds: 960),
+  //         end: const Duration(seconds: 6, milliseconds: 960),
+  //         child: gettingAVisa,
+  //         tag: MediaItem(
+  //           id: '3($index)',
+  //           // Metadata to display in the notification:
+  //           // album: "Album name",
+  //           title: "Anywhere from one month to two months.($index)",
+  //           // artUri: Uri.parse('https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg'),
+  //         )
+  //     );
+  //   })
+  ];
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
@@ -128,13 +138,13 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     // aₙ = 9n + 2
     // x >= 2 && (x - 2) % 9 === 0;
-    if (index >= 2 && (index - 2) % 9 == 0) {
-      await Future.delayed(Duration.zero);
-      await _player.setSpeed(0.6);
-    } else if (index >= 5 && (index - 5) % 9 == 0) {
-      await Future.delayed(Duration.zero);
-      await _player.setSpeed(1.0);
-    }
+    // if (index >= 2 && (index - 2) % 9 == 0) {
+    //   await Future.delayed(Duration.zero);
+    //   await _player.setSpeed(0.6);
+    // } else if (index >= 5 && (index - 5) % 9 == 0) {
+    //   await Future.delayed(Duration.zero);
+    //   await _player.setSpeed(1.0);
+    // }
 
     final source = sequence[index];
     final metadata = source.tag as MediaItem;
@@ -188,6 +198,13 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
             children: [
               Row(
                 children: [
+                  Expanded(
+                    child: Text(
+                      "Playlist",
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                   StreamBuilder<LoopMode>(
                     stream: _player.loopModeStream,
                     builder: (context, snapshot) {
@@ -214,20 +231,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       );
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.clear_all),
-                    tooltip: 'Clear All',
-                    onPressed: () {
-                      _player.setAudioSources([]);
-                    },
-                  ),
-                  Expanded(
-                    child: Text(
-                      "Playlist",
-                      style: Theme.of(context).textTheme.titleLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
                   StreamBuilder<bool>(
                     stream: _player.shuffleModeEnabledStream,
                     builder: (context, snapshot) {
@@ -244,6 +247,14 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                           await _player.setShuffleModeEnabled(enable);
                         },
                       );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.playlist_remove),
+                    tooltip: 'Clear All',
+                    onPressed: () {
+                      _player.stop();
+                      _player.setAudioSources([]);
                     },
                   ),
                 ],
@@ -324,6 +335,125 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   );
                 },
               ),
+              StreamBuilder<PositionData>(
+                stream: _positionDataStream,
+                builder: (context, snapshot) {
+                  final positionData = snapshot.data;
+                  return Text("${positionData?.position}");
+                },
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("$clipStartDuration"),
+                  Text("-------"),
+                  Text("$clipEndDuration"),
+                ]
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.first_page),
+                    onPressed: () {
+                      setState(() {
+                        clipStartDuration = _player.position;
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.keyboard_double_arrow_left),
+                    onPressed: () {
+                      Duration newPosition = _player.position - Duration(microseconds: 100);
+                      setState(() {
+                        clipStartDuration = newPosition;
+                      });
+                      _player.seek(newPosition);
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.keyboard_arrow_left),
+                    onPressed: () {
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.bookmark),
+                    onPressed: () {
+                        List<AudioSource> a = List.generate(3, (index) {
+                        return ClippingAudioSource(
+                          start: clipStartDuration,
+                          end: clipEndDuration,
+                          child: gettingAVisa,
+                          tag: MediaItem(
+                            id: '1($index)',
+                            title: "Does it take long to get a visa?($index)",
+                          )
+                        );
+                      });
+                        _player.setAudioSources(a);
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.keyboard_double_arrow_right),
+                    onPressed: () {
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.keyboard_arrow_right),
+                    onPressed: () {
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.last_page),
+                    onPressed: () {
+                      setState(() {
+                        clipEndDuration = _player.position;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.content_cut),
+                    onPressed: () {
+                      print("position: ${_player.position}");
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.code),
+                    onPressed: () {
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.social_distance),
+                    onPressed: () {
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.label_important),
+                    onPressed: () {
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.keyboard_tab),
+                    onPressed: () {
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.loop),
+                    onPressed: () {
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.push_pin),
+                    onPressed: () {
+                    },
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -370,8 +500,10 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ),
       );
 
-      _player.addAudioSource(source);
+      newSources.add(source);
     }
+    _player.setAudioSources(newSources);
+
     return null;
   }
 }
