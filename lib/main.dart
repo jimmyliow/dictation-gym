@@ -254,7 +254,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     tooltip: 'Clear All',
                     onPressed: () {
                       _player.stop();
-                      _player.setAudioSources([]);
+                      _player.clearAudioSources();
                     },
                   ),
                 ],
@@ -346,15 +346,15 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text("$clipStartDuration"),
-                  Text("-------"),
+                  Text("|------|"),
                   Text("$clipEndDuration"),
                 ]
               ),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.first_page),
+                  TextButton(
+                    child: const Text('A'),
                     onPressed: () {
                       setState(() {
                         clipStartDuration = _player.position;
@@ -362,7 +362,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.keyboard_double_arrow_left),
+                    icon: const Icon(Icons.keyboard_arrow_left),
                     onPressed: () {
                       Duration newPosition = _player.position - Duration(microseconds: 100);
                       setState(() {
@@ -372,39 +372,59 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.keyboard_arrow_left),
+                    icon: const Icon(Icons.keyboard_double_arrow_left),
                     onPressed: () {
+                      Duration newPosition = _player.position - Duration(microseconds: 800);
+                      setState(() {
+                        clipStartDuration = newPosition;
+                      });
+                      _player.seek(newPosition);
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.bookmark),
+                    icon: const Icon(Icons.loop),
                     onPressed: () {
-                        List<AudioSource> a = List.generate(3, (index) {
-                        return ClippingAudioSource(
-                          start: clipStartDuration,
-                          end: clipEndDuration,
-                          child: gettingAVisa,
-                          tag: MediaItem(
-                            id: '1($index)',
-                            title: "Does it take long to get a visa?($index)",
-                          )
-                        );
-                      });
-                        _player.setAudioSources(a);
+                      final currentIndex = _player.currentIndex;
+                      if (currentIndex != null) {
+                        final currentSource = _player.audioSources[currentIndex] as UriAudioSource;
+
+                          List<AudioSource> a = List.generate(3, (index) {
+                          return ClippingAudioSource(
+                            start: clipStartDuration,
+                            end: clipEndDuration,
+                            child: currentSource,
+                            tag: MediaItem(
+                              id: '1($index)',
+                              title: "sentence($index)",
+                            )
+                          );
+                        });
+                          _player.setAudioSources(a);
+                      }
                     },
                   ),
                   IconButton(
                     icon: const Icon(Icons.keyboard_double_arrow_right),
                     onPressed: () {
+                      Duration newPosition = _player.position + Duration(microseconds: 800);
+                      setState(() {
+                        clipEndDuration = newPosition;
+                      });
+                      _player.seek(newPosition);
                     },
                   ),
                   IconButton(
                     icon: const Icon(Icons.keyboard_arrow_right),
                     onPressed: () {
+                      Duration newPosition = _player.position + Duration(microseconds: 100);
+                      setState(() {
+                        clipEndDuration = newPosition;
+                      });
+                      _player.seek(newPosition);
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.last_page),
+                  TextButton(
+                    child: const Text('B'),
                     onPressed: () {
                       setState(() {
                         clipEndDuration = _player.position;
@@ -417,33 +437,28 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.content_cut),
+                    icon: const Icon(Icons.snooze),
                     onPressed: () {
-                      print("position: ${_player.position}");
+                      delayedStop();
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.code),
-                    onPressed: () {
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.social_distance),
+                    icon: const Icon(Icons.fitbit),
                     onPressed: () {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.label_important),
+                    icon: const Icon(Icons.fitness_center),
                     onPressed: () {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.keyboard_tab),
+                    icon: const Icon(Icons.autofps_select),
                     onPressed: () {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.loop),
+                    icon: const Icon(Icons.lyrics),
                     onPressed: () {
                     },
                   ),
@@ -467,13 +482,27 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     );
   }
 
+  Future<void> delayedStop() async {
+
+    _scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Text('Stop playing after 30min.'),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+
+    Future.delayed(Duration(minutes: 30), () async {
+      if (_player.playing) {
+        await _player.stop();
+      }
+    });
+  }
+
   Future<String?> pickDirectory() async {
     if (Platform.isAndroid || Platform.isIOS) {
       final status = await Permission.storage.request();
       if (!status.isGranted) return null;
     }
-
-    List<File> audioFiles = [];
 
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
@@ -481,7 +510,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     );
     if (result == null || result.files.isEmpty) return null;
 
-    audioFiles = result.paths.map((path) => File(path!)).toList();
+    List<File> audioFiles = result.paths.map((path) => File(path!)).toList();
 
     List<AudioSource> newSources = [];
     for (PlatformFile file in result.files) {
@@ -493,10 +522,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         Uri.file(file.path!),
         tag: MediaItem(
           id: fileName,
-          // album: "Science Friday",
           title: fileName,
-          // artUri: Uri.parse(
-          //     "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg"),
         ),
       );
 
@@ -518,21 +544,6 @@ class ControlButtons extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
-          icon: const Icon(Icons.volume_up),
-          onPressed: () {
-            showSliderDialog(
-              context: context,
-              title: "Adjust volume",
-              divisions: 20,
-              min: 0.0,
-              max: 2.0,
-              value: player.volume,
-              stream: player.volumeStream,
-              onChanged: player.setVolume,
-            );
-          },
-        ),
         StreamBuilder<SequenceState?>(
           stream: player.sequenceStateStream,
           builder: (context, snapshot) => IconButton(
