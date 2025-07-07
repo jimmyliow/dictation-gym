@@ -10,7 +10,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await JustAudioBackground.init(
@@ -34,8 +33,13 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Duration clipStartDuration = Duration.zero;
   Duration clipEndDuration = Duration.zero;
   List<Lyric> lyrics = [];
-  final UriAudioSource gettingAVisa = AudioSource.uri(Uri.parse(
-  "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3"));
+  List<PlatformFile> audioFiles = [];
+
+  final UriAudioSource gettingAVisa = AudioSource.uri(
+    Uri.parse(
+      "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3",
+    ),
+  );
   late final List<AudioSource> _playlist = [
     // AudioSource.uri(Uri.parse("https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3"),
     //   tag: MediaItem(
@@ -152,8 +156,31 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+
+          Expanded(
+          child: audioFiles.isEmpty
+          ? Text(
+            'Audio files is empty',
+            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+          )
+                : ListView.builder(
+        padding: const EdgeInsets.only(top: 16, bottom: 80),
+        itemCount: audioFiles.length,
+        itemBuilder: (context, index) {
+          final currentFile = audioFiles[index];
+          return ListTile(
+            title: Text(
+              currentFile.name,
+              style: const TextStyle(fontSize: 16),
+            ),
+          );
+        },
+      ),
+    ),
+
               Row(
                 children: [
+
                   Expanded(
                     child: Text(
                       "Playlist",
@@ -294,10 +321,10 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("$clipStartDuration"),
-                  Text("<------>"),
-                  Text("$clipEndDuration"),
-                ]
+                  Text(_formatDuration(clipStartDuration)),
+                  Text(" |------| "),
+                  Text(_formatDuration(clipEndDuration)),
+                ],
               ),
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -305,7 +332,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   IconButton(
                     icon: const Icon(Icons.keyboard_arrow_left),
                     onPressed: () {
-                      Duration newPosition = _player.position - Duration(microseconds: 800);
+                      Duration newPosition =
+                          clipStartDuration - Duration(microseconds: 800);
                       setState(() {
                         clipStartDuration = newPosition;
                       });
@@ -323,7 +351,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   IconButton(
                     icon: const Icon(Icons.keyboard_arrow_right),
                     onPressed: () {
-                      Duration newPosition = _player.position + Duration(microseconds: 800);
+                      Duration newPosition =
+                          clipStartDuration + Duration(microseconds: 800);
                       setState(() {
                         clipStartDuration = newPosition;
                       });
@@ -336,29 +365,30 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       final currentIndex = _player.currentIndex;
 
                       if (currentIndex != null) {
+                        final currentSource =
+                            _player.audioSources[currentIndex]
+                                as UriAudioSource;
 
-                        final currentSource = _player.audioSources[currentIndex] as UriAudioSource;
-
-                          List<AudioSource> a = List.generate(3, (index) {
-
-                          return ClippingAudioSource(
+                        List<AudioSource> a = [
+                          ClippingAudioSource(
                             start: clipStartDuration,
                             end: clipEndDuration,
                             child: currentSource,
                             tag: MediaItem(
-                              id: '1($index)',
-                              title: "sentence($index)",
-                            )
-                          );
-                        });
-                          _player.setAudioSources(a);
+                              id: 'Clipping Audio',
+                              title: "Clipping Audio",
+                            ),
+                          ),
+                        ];
+                        _player.setAudioSources(a);
                       }
                     },
                   ),
                   IconButton(
                     icon: const Icon(Icons.keyboard_arrow_left),
                     onPressed: () {
-                      Duration newPosition = _player.position - Duration(microseconds: 800);
+                      Duration newPosition =
+                          clipEndDuration - Duration(microseconds: 800);
                       setState(() {
                         clipEndDuration = newPosition;
                       });
@@ -376,7 +406,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   IconButton(
                     icon: const Icon(Icons.keyboard_arrow_right),
                     onPressed: () {
-                      Duration newPosition = _player.position + Duration(microseconds: 800);
+                      Duration newPosition =
+                          clipEndDuration + Duration(microseconds: 800);
                       setState(() {
                         clipEndDuration = newPosition;
                       });
@@ -394,15 +425,10 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       delayedStop();
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.fitbit),
-                    onPressed: () {
-                    },
-                  ),
+                  IconButton(icon: const Icon(Icons.fitbit), onPressed: () {}),
                   IconButton(
                     icon: const Icon(Icons.fitness_center),
-                    onPressed: () {
-                    },
+                    onPressed: () {},
                   ),
                   IconButton(
                     icon: const Icon(Icons.autofps_select),
@@ -418,80 +444,99 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   ),
                   IconButton(
                     icon: const Icon(Icons.push_pin),
+                    onPressed: () {},
+                  ),
+
+                  IconButton(
+                    icon: const Icon(Icons.queue_music),
                     onPressed: () {
+
+                      showSliderDialog(
+                        context: context,
+                        title: "Adjust speed",
+                        divisions: 20,
+                        min: 0.2,
+                        max: 2.0,
+                        value: _player.speed,
+                        stream: _player.speedStream,
+                        onChanged: _player.setSpeed,
+                      );
                     },
                   ),
+                  ShowPlaylistButton(_player),
                 ],
               ),
+
               Expanded(
                 child: lyrics.isEmpty
                     ? Text(
-                  '没有歌词内容',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey[600],
-                  ),
-                )
+                        'Lyrics is empty',
+                        style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                      )
                     : ListView.builder(
-                  padding: const EdgeInsets.only(top: 16, bottom: 80),
-                  itemCount: lyrics.length,
-                  itemBuilder: (context, index) {
-                    final lyric = lyrics[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 6),
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.deepPurple[50],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${index + 1}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple,
+                        padding: const EdgeInsets.only(top: 16, bottom: 80),
+                        itemCount: lyrics.length,
+                        itemBuilder: (context, index) {
+                          final lyric = lyrics[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
                             ),
-                          ),
-                        ),
-                        title: Text(
-                          lyric.text,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(
-                            _formatTimeRange(lyric.startTime, lyric.endTime),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
+                            child: ListTile(
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.deepPurple[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${index + 1}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                lyric.text,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  _formatTimeRange(
+                                    lyric.startTime,
+                                    lyric.endTime,
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue[50],
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '${lyric.endTime.inMilliseconds - lyric.startTime.inMilliseconds}ms',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.blue[700],
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        trailing: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            '${lyric.endTime.inMilliseconds - lyric.startTime.inMilliseconds}ms',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.blue[700],
-                            ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
-
-
-
             ],
           ),
         ),
@@ -505,13 +550,12 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     );
   }
 
-
   List<Lyric> _parseLrcContent(String content) {
     List<Lyric> result = [];
     final lines = content.split('\n');
     // 增强正则：匹配双时间标签（开始+结束）和歌词文本
     final timeRegExp = RegExp(
-        r'\[(\d{0,2}):(\d{2}):(\d{2})\.(\d{1,3})\]\s*\[(\d{0,2}):(\d{2}):(\d{2})\.(\d{1,3})\](.*)'
+      r'\[(\d{0,2}):(\d{2}):(\d{2})\.(\d{1,3})\]\s*\[(\d{0,2}):(\d{2}):(\d{2})\.(\d{1,3})\](.*)',
     );
 
     for (String line in lines) {
@@ -554,61 +598,58 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return result;
   }
 
-
   String _formatDuration(Duration d) {
     return '${d.inMinutes}:${(d.inSeconds % 60).toString().padLeft(2, '0')}.${(d.inMilliseconds % 1000).toString().padLeft(3, '0')}';
   }
+
   String _formatTimeRange(Duration start, Duration end) {
     return '${_formatDuration(start)} - ${_formatDuration(end)}';
   }
 
-
   fromLrc() {
     List<AudioSource> lrcList = [
       ...List.generate(9, (index) {
-      return ClippingAudioSource(
-        // 00:00:01.710 - 00:00:03.680
-        start: const Duration(seconds: 1, milliseconds: 710),
-        end: const Duration(seconds: 3, milliseconds: 680),
-        child: gettingAVisa,
-        tag: MediaItem(
-          id: '1($index)',
-          title: "Does it take long to get a visa?($index)",
-        )
-      );
-    }),
-    ...List.generate(9, (index) {
-      return ClippingAudioSource(
-        // [00:00:03.710][00:00:04.960]
-        start: const Duration(seconds: 3, milliseconds: 710),
-        end: const Duration(seconds: 4, milliseconds: 960),
-        child: gettingAVisa,
-        tag: MediaItem(
-          id: '2($index)',
-          title: "It depends on the season.($index)",
-        )
-      );
-    }),
-    ...List.generate(9, (index) {
-      return ClippingAudioSource(
-        // 00:00:04.960][00:00:06.960
+        return ClippingAudioSource(
+          // 00:00:01.710 - 00:00:03.680
+          start: const Duration(seconds: 1, milliseconds: 710),
+          end: const Duration(seconds: 3, milliseconds: 680),
+          child: gettingAVisa,
+          tag: MediaItem(
+            id: '1($index)',
+            title: "Does it take long to get a visa?($index)",
+          ),
+        );
+      }),
+      ...List.generate(9, (index) {
+        return ClippingAudioSource(
+          // [00:00:03.710][00:00:04.960]
+          start: const Duration(seconds: 3, milliseconds: 710),
+          end: const Duration(seconds: 4, milliseconds: 960),
+          child: gettingAVisa,
+          tag: MediaItem(
+            id: '2($index)',
+            title: "It depends on the season.($index)",
+          ),
+        );
+      }),
+      ...List.generate(9, (index) {
+        return ClippingAudioSource(
+          // 00:00:04.960][00:00:06.960
           start: const Duration(seconds: 4, milliseconds: 960),
           end: const Duration(seconds: 6, milliseconds: 960),
           child: gettingAVisa,
           tag: MediaItem(
             id: '3($index)',
             title: "Anywhere from one month to two months.($index)",
-          )
-      );
-    })
+          ),
+        );
+      }),
     ];
-
 
     _player.setAudioSources(lrcList);
   }
 
   Future<void> delayedStop() async {
-
     _scaffoldMessengerKey.currentState?.showSnackBar(
       SnackBar(
         content: Text('Stop playing after 30min.'),
@@ -645,31 +686,22 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       lyrics = parsedLyrics;
     });
 
+    if (_player.audioSource == null) return null;
 
-    // final currentSource = _player.audioSource as UriAudioSource;
-    //
-    // _scaffoldMessengerKey.currentState?.showSnackBar(
-    //   SnackBar(
-    //     content: Text('${currentSource.uri}; ${parsedLyrics.length}'),
-    //     duration: const Duration(seconds: 1),
-    //   ),
-    // );
+    final currentSource = _player.audioSource as UriAudioSource;
 
-    // List<AudioSource> newSources = [];
-    // for (Lyric lrc in lrcList) {
-    //   AudioSource lrcSource = ClippingAudioSource(
-    //       start: lrc.startTime,
-    //       end: lrc.endTime,
-    //       child: currentSource,
-    //       tag: MediaItem(
-    //         id: lrc.text,
-    //         title: lrc.text,
-    //       )
-    //   );
-    //
-    //   newSources.add(lrcSource);
-    // }
-    // _player.setAudioSources(newSources);
+    List<AudioSource> newSources = [];
+    for (Lyric lrc in parsedLyrics) {
+      AudioSource lrcSource = ClippingAudioSource(
+        start: lrc.startTime,
+        end: lrc.endTime,
+        child: currentSource,
+        tag: MediaItem(id: lrc.text, title: lrc.text),
+      );
+
+      newSources.add(lrcSource);
+    }
+    _player.setAudioSources(newSources);
 
     return null;
   }
@@ -686,30 +718,90 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     );
     if (result == null || result.files.isEmpty) return null;
 
-    List<File> audioFiles = result.paths.map((path) => File(path!)).toList();
+    List<PlatformFile> selectedFiles = [];
+
 
     List<AudioSource> newSources = [];
     for (PlatformFile file in result.files) {
       if (file.path == null) continue;
 
       String fileName = file.name;
+      selectedFiles.add(file);
 
       AudioSource source = AudioSource.uri(
         Uri.file(file.path!),
-        tag: MediaItem(
-          id: fileName,
-          title: fileName,
-        ),
+        tag: MediaItem(id: fileName, title: fileName),
       );
 
       newSources.add(source);
     }
+
+    setState(() {
+      audioFiles = selectedFiles;
+    });
     _player.setAudioSources(newSources);
 
     return null;
   }
 }
 
+//
+enum SingingCharacter { lafayette, jefferson }
+class ShowPlaylistButton extends StatelessWidget {
+  final AudioPlayer player;
+  const ShowPlaylistButton(this.player, {Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        StreamBuilder<double>(
+          stream: player.speedStream,
+          builder: (context, snapshot) => IconButton(
+            icon: Text(
+              "${snapshot.data?.toStringAsFixed(1)}x",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            onPressed: () {
+              showDialog<void>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text("Adjust Speed", textAlign: TextAlign.center),
+                  content:
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      ListTile(
+                        title: const Text('0.2'),
+                        leading: Radio(
+                          value: 0.2,
+                          groupValue: [0.2, 0.4],
+                          onChanged: (v) {
+                          },
+                        ),
+                      ),
+                      ListTile(
+                        title: const Text('0.4'),
+                        leading: Radio(
+                          value: 0.4,
+                          groupValue: [0.2, 0.4],
+                          onChanged: (v) {
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+//
 class ControlButtons extends StatelessWidget {
   final AudioPlayer player;
 
@@ -814,4 +906,3 @@ class Lyric {
 
   Lyric(this.startTime, this.endTime, this.text);
 }
-
