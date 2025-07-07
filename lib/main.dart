@@ -22,7 +22,7 @@ Future<void> main() async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   MyAppState createState() => MyAppState();
@@ -156,31 +156,79 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-
-          Expanded(
-          child: audioFiles.isEmpty
-          ? Text(
-            'Audio files is empty',
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-          )
-                : ListView.builder(
-        padding: const EdgeInsets.only(top: 16, bottom: 80),
-        itemCount: audioFiles.length,
-        itemBuilder: (context, index) {
-          final currentFile = audioFiles[index];
-          return ListTile(
-            title: Text(
-              currentFile.name,
-              style: const TextStyle(fontSize: 16),
-            ),
-          );
-        },
-      ),
-    ),
-
               Row(
                 children: [
-
+                  Expanded(
+                    child: Text(
+                      "Audio files",
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.playlist_play),
+                    tooltip: 'Play All',
+                    onPressed: () {
+                      playAllAudios();
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.playlist_remove),
+                    tooltip: 'Clear All',
+                    onPressed: () {},
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    tooltip: 'Add files',
+                    onPressed: () {
+                      pickAudioFiles();
+                    },
+                  ),
+                ],
+              ),
+              Expanded(
+                child: audioFiles.isEmpty
+                    ? Text(
+                        'Audio files is empty',
+                        style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.only(top: 16, bottom: 80),
+                        itemCount: audioFiles.length,
+                        itemBuilder: (context, index) {
+                          final currentFile = audioFiles[index];
+                          return ListTile(
+                            title: Text(
+                              currentFile.name,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.playlist_add),
+                              tooltip: 'Add to playlist',
+                              onPressed: () {
+                                _scaffoldMessengerKey.currentState?.showSnackBar(
+                                  SnackBar(
+                                    content: Text("Play file : ${currentFile.name}"),
+                                    duration: const Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                            ),
+                            onTap: () {
+                              _scaffoldMessengerKey.currentState?.showSnackBar(
+                                SnackBar(
+                                  content: Text("Tap file : ${currentFile.name}"),
+                                  duration: const Duration(seconds: 1),
+                                ),
+                              );
+                              playAudio(currentFile);
+                            }
+                          );
+                        },
+                      ),
+              ),
+              Row(
+                children: [
                   Expanded(
                     child: Text(
                       "Playlist",
@@ -242,49 +290,49 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   ),
                 ],
               ),
-              SizedBox(
-                height: 240.0,
-                child: StreamBuilder<SequenceState?>(
-                  stream: _player.sequenceStateStream,
-                  builder: (context, snapshot) {
-                    final state = snapshot.data;
-                    final sequence = state?.sequence ?? [];
-                    return ReorderableListView(
-                      onReorder: (int oldIndex, int newIndex) {
-                        if (oldIndex < newIndex) newIndex--;
-                        _player.moveAudioSource(oldIndex, newIndex);
-                      },
-                      children: [
-                        for (var i = 0; i < sequence.length; i++)
-                          Dismissible(
-                            key: ValueKey(sequence[i]),
-                            background: Container(
-                              color: Colors.redAccent,
-                              alignment: Alignment.centerRight,
-                              child: const Padding(
-                                padding: EdgeInsets.only(right: 8.0),
-                                child: Icon(Icons.delete, color: Colors.white),
-                              ),
-                            ),
-                            onDismissed: (dismissDirection) =>
-                                _player.removeAudioSourceAt(i),
-                            child: Material(
-                              color: i == state!.currentIndex
-                                  ? Colors.grey.shade300
-                                  : null,
-                              child: ListTile(
-                                title: Text(sequence[i].tag.title as String),
-                                onTap: () => _player
-                                    .seek(Duration.zero, index: i)
-                                    .catchError((e, st) {}),
-                              ),
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                ),
-              ),
+              // SizedBox( // playlist
+              //   height: 240.0,
+              //   child: StreamBuilder<SequenceState?>(
+              //     stream: _player.sequenceStateStream,
+              //     builder: (context, snapshot) {
+              //       final state = snapshot.data;
+              //       final sequence = state?.sequence ?? [];
+              //       return ReorderableListView(
+              //         onReorder: (int oldIndex, int newIndex) {
+              //           if (oldIndex < newIndex) newIndex--;
+              //           _player.moveAudioSource(oldIndex, newIndex);
+              //         },
+              //         children: [
+              //           for (var i = 0; i < sequence.length; i++)
+              //             Dismissible(
+              //               key: ValueKey(sequence[i]),
+              //               background: Container(
+              //                 color: Colors.redAccent,
+              //                 alignment: Alignment.centerRight,
+              //                 child: const Padding(
+              //                   padding: EdgeInsets.only(right: 8.0),
+              //                   child: Icon(Icons.delete, color: Colors.white),
+              //                 ),
+              //               ),
+              //               onDismissed: (dismissDirection) =>
+              //                   _player.removeAudioSourceAt(i),
+              //               child: Material(
+              //                 color: i == state!.currentIndex
+              //                     ? Colors.grey.shade300
+              //                     : null,
+              //                 child: ListTile(
+              //                   title: Text(sequence[i].tag.title as String),
+              //                   onTap: () => _player
+              //                       .seek(Duration.zero, index: i)
+              //                       .catchError((e, st) {}),
+              //                 ),
+              //               ),
+              //             ),
+              //         ],
+              //       );
+              //     },
+              //   ),
+              // ),
               StreamBuilder<SequenceState?>(
                 stream: _player.sequenceStateStream,
                 builder: (context, snapshot) {
@@ -450,7 +498,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   IconButton(
                     icon: const Icon(Icons.queue_music),
                     onPressed: () {
-
                       showSliderDialog(
                         context: context,
                         title: "Adjust speed",
@@ -539,12 +586,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
               ),
             ],
           ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.add),
-          onPressed: () {
-            pickDirectory();
-          },
         ),
       ),
     );
@@ -706,7 +747,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return null;
   }
 
-  Future<String?> pickDirectory() async {
+  Future<String?> pickAudioFiles() async {
     if (Platform.isAndroid || Platform.isIOS) {
       final status = await Permission.storage.request();
       if (!status.isGranted) return null;
@@ -719,7 +760,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     if (result == null || result.files.isEmpty) return null;
 
     List<PlatformFile> selectedFiles = [];
-
 
     List<AudioSource> newSources = [];
     for (PlatformFile file in result.files) {
@@ -743,13 +783,48 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     return null;
   }
+
+  playAllAudios() async {
+
+    List<AudioSource> newSources = [];
+
+    for (PlatformFile file in audioFiles) {
+      if (file.path == null) continue;
+
+      String fileName = file.name;
+
+      AudioSource source = AudioSource.uri(
+        Uri.file(file.path!),
+        tag: MediaItem(id: fileName, title: fileName),
+      );
+
+      newSources.add(source);
+    }
+
+    _player.setAudioSources(newSources);
+  }
+
+  playAudio(PlatformFile audio) async {
+
+    List<AudioSource> playlist = [
+      AudioSource.uri(Uri.file(audio.path!),
+        tag: MediaItem(
+          id: audio.name,
+          title: audio.name,
+        ),
+      )
+    ];
+
+    _player.setAudioSources(playlist);
+  }
 }
 
 //
 enum SingingCharacter { lafayette, jefferson }
+
 class ShowPlaylistButton extends StatelessWidget {
   final AudioPlayer player;
-  const ShowPlaylistButton(this.player, {Key? key}) : super(key: key);
+  const ShowPlaylistButton(this.player, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -768,8 +843,7 @@ class ShowPlaylistButton extends StatelessWidget {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: Text("Adjust Speed", textAlign: TextAlign.center),
-                  content:
-                  Column(
+                  content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       ListTile(
@@ -777,8 +851,7 @@ class ShowPlaylistButton extends StatelessWidget {
                         leading: Radio(
                           value: 0.2,
                           groupValue: [0.2, 0.4],
-                          onChanged: (v) {
-                          },
+                          onChanged: (v) {},
                         ),
                       ),
                       ListTile(
@@ -786,8 +859,7 @@ class ShowPlaylistButton extends StatelessWidget {
                         leading: Radio(
                           value: 0.4,
                           groupValue: [0.2, 0.4],
-                          onChanged: (v) {
-                          },
+                          onChanged: (v) {},
                         ),
                       ),
                     ],
@@ -801,11 +873,12 @@ class ShowPlaylistButton extends StatelessWidget {
     );
   }
 }
+
 //
 class ControlButtons extends StatelessWidget {
   final AudioPlayer player;
 
-  const ControlButtons(this.player, {Key? key}) : super(key: key);
+  const ControlButtons(this.player, {super.key});
 
   @override
   Widget build(BuildContext context) {

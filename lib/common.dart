@@ -10,13 +10,13 @@ class SeekBar extends StatefulWidget {
   final ValueChanged<Duration>? onChangeEnd;
 
   const SeekBar({
-    Key? key,
+    super.key,
     required this.duration,
     required this.position,
     required this.bufferedPosition,
     this.onChanged,
     this.onChangeEnd,
-  }) : super(key: key);
+  });
 
   @override
   SeekBarState createState() => SeekBarState();
@@ -30,9 +30,7 @@ class SeekBarState extends State<SeekBar> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _sliderThemeData = SliderTheme.of(context).copyWith(
-      trackHeight: 2.0,
-    );
+    _sliderThemeData = SliderTheme.of(context).copyWith(trackHeight: 2.0);
   }
 
   @override
@@ -42,8 +40,10 @@ class SeekBarState extends State<SeekBar> {
         Positioned(
           left: 16.0,
           bottom: 0.0,
-          child: Text(_formatDuration(widget.position),
-              style: Theme.of(context).textTheme.bodySmall),
+          child: Text(
+            _formatDuration(widget.position),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ),
         SliderTheme(
           data: _sliderThemeData.copyWith(
@@ -55,8 +55,10 @@ class SeekBarState extends State<SeekBar> {
             child: Slider(
               min: 0.0,
               max: widget.duration.inMilliseconds.toDouble(),
-              value: min(widget.bufferedPosition.inMilliseconds.toDouble(),
-                  widget.duration.inMilliseconds.toDouble()),
+              value: min(
+                widget.bufferedPosition.inMilliseconds.toDouble(),
+                widget.duration.inMilliseconds.toDouble(),
+              ),
               onChanged: (value) {
                 setState(() {
                   _dragValue = value;
@@ -81,8 +83,10 @@ class SeekBarState extends State<SeekBar> {
           child: Slider(
             min: 0.0,
             max: widget.duration.inMilliseconds.toDouble(),
-            value: min(_dragValue ?? widget.position.inMilliseconds.toDouble(),
-                widget.duration.inMilliseconds.toDouble()),
+            value: min(
+              _dragValue ?? widget.position.inMilliseconds.toDouble(),
+              widget.duration.inMilliseconds.toDouble(),
+            ),
             onChanged: (value) {
               setState(() {
                 _dragValue = value;
@@ -103,12 +107,9 @@ class SeekBarState extends State<SeekBar> {
           right: 16.0,
           bottom: 0.0,
           child: Text(
-              // RegExp(r'((^0*[1-9]\d*:)?\d{2}:\d{2}:\d{1,3})\.\d+$')
-              //         .firstMatch("$_remaining")
-              //         ?.group(1) ??
-              //     '$_remaining',
-    _formatDuration(_remaining),
-              style: Theme.of(context).textTheme.bodySmall),
+            _formatDuration(_remaining),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ),
       ],
     );
@@ -172,11 +173,14 @@ void showSliderDialog({
           height: 100.0,
           child: Column(
             children: [
-              Text('${snapshot.data?.toStringAsFixed(1)}$valueSuffix',
-                  style: const TextStyle(
-                      fontFamily: 'Fixed',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24.0)),
+              Text(
+                '${snapshot.data?.toStringAsFixed(1)}$valueSuffix',
+                style: const TextStyle(
+                  fontFamily: 'Fixed',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24.0,
+                ),
+              ),
               Slider(
                 divisions: divisions,
                 min: min,
