@@ -30,6 +30,7 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   late AudioPlayer _player;
+  final FocusNode _buttonFocusNode = FocusNode(debugLabel: 'Menu Button');
   Duration clipStartDuration = Duration.zero;
   Duration clipEndDuration = Duration.zero;
   List<Lyric> lyrics = [];
@@ -118,6 +119,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _buttonFocusNode.dispose();
     ambiguate(WidgetsBinding.instance)!.removeObserver(this);
     _player.dispose();
     super.dispose();
@@ -150,6 +152,32 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 );
               },
             ),
+            //
+            MenuAnchor(
+              childFocusNode: _buttonFocusNode,
+              menuChildren: <Widget>[
+                MenuItemButton(onPressed: () {}, child: const Text('Revert')),
+                MenuItemButton(onPressed: () {}, child: const Text('Setting')),
+                MenuItemButton(
+                  onPressed: () {},
+                  child: const Text('Send Feedback'),
+                ),
+              ],
+              builder: (_, MenuController controller, Widget? child) {
+                return IconButton(
+                  focusNode: _buttonFocusNode,
+                  onPressed: () {
+                    if (controller.isOpen) {
+                      controller.close();
+                    } else {
+                      controller.open();
+                    }
+                  },
+                  icon: const Icon(Icons.more_vert),
+                );
+              },
+            ),
+            //
           ],
         ),
         body: SafeArea(
@@ -189,7 +217,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
               Expanded(
                 child: audioFiles.isEmpty
                     ? Text(
-                        'Audio files is empty',
+                        'Less is more',
                         style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                       )
                     : ListView.builder(
@@ -833,6 +861,53 @@ class PlaylistButton extends StatelessWidget {
 }
 
 //
+class MyCascadingMenu extends StatefulWidget {
+  const MyCascadingMenu({super.key});
+
+  @override
+  State<MyCascadingMenu> createState() => _MyCascadingMenuState();
+}
+
+class _MyCascadingMenuState extends State<MyCascadingMenu> {
+  final FocusNode _buttonFocusNode = FocusNode(debugLabel: 'Menu Button');
+
+  @override
+  void dispose() {
+    _buttonFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MenuAnchor(
+      childFocusNode: _buttonFocusNode,
+      menuChildren: <Widget>[
+        MenuItemButton(onPressed: () {}, child: const Text('0.2')),
+        MenuItemButton(onPressed: () {}, child: const Text('0.4')),
+        MenuItemButton(onPressed: () {}, child: const Text('0.6')),
+        MenuItemButton(onPressed: () {}, child: const Text('0.8')),
+        MenuItemButton(onPressed: () {}, child: const Text('1.0')),
+        MenuItemButton(onPressed: () {}, child: const Text('1.2')),
+        MenuItemButton(onPressed: () {}, child: const Text('1.5')),
+        MenuItemButton(onPressed: () {}, child: const Text('2.0')),
+      ],
+      builder: (_, MenuController controller, Widget? child) {
+        return IconButton(
+          focusNode: _buttonFocusNode,
+          onPressed: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
+          icon: const Icon(Icons.more_vert),
+        );
+      },
+    );
+  }
+}
+//
 enum SingingCharacter { lafayette, jefferson }
 
 class SpeedButton extends StatelessWidget {
@@ -844,68 +919,7 @@ class SpeedButton extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        StreamBuilder<double>(
-          stream: player.speedStream,
-          builder: (context, snapshot) => IconButton(
-            icon: Text(
-              "${snapshot.data?.toStringAsFixed(1)}x",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            onPressed: () {
-              showDialog<void>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: Text("Adjust Speed", textAlign: TextAlign.center),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      ListTile(
-                        title: const Text('0.2'),
-                        leading: Radio(
-                          value: 0.2,
-                          groupValue: [0.2, 0.4],
-                          onChanged: (v) {},
-                        ),
-                      ),
-                      ListTile(
-                        title: const Text('0.4'),
-                        leading: Radio(
-                          value: 0.4,
-                          groupValue: [0.2, 0.4],
-                          onChanged: (v) {},
-                        ),
-                      ),
-                      ListTile(
-                        title: const Text('0.6'),
-                        leading: Radio(
-                          value: 0.6,
-                          groupValue: [0.2, 0.4],
-                          onChanged: (v) {},
-                        ),
-                      ),
-                      ListTile(
-                        title: const Text('0.8'),
-                        leading: Radio(
-                          value: 0.8,
-                          groupValue: [0.2, 0.4],
-                          onChanged: (v) {},
-                        ),
-                      ),
-                      ListTile(
-                        title: const Text('1.0'),
-                        leading: Radio(
-                          value: 1.0,
-                          groupValue: [0.2, 0.4],
-                          onChanged: (v) {},
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+        MyCascadingMenu(),
       ],
     );
   }
