@@ -490,27 +490,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       fromLrc();
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.push_pin),
-                    onPressed: () {},
-                  ),
-
-                  IconButton(
-                    icon: const Icon(Icons.queue_music),
-                    onPressed: () {
-                      showSliderDialog(
-                        context: context,
-                        title: "Adjust speed",
-                        divisions: 20,
-                        min: 0.2,
-                        max: 2.0,
-                        value: _player.speed,
-                        stream: _player.speedStream,
-                        onChanged: _player.setSpeed,
-                      );
-                    },
-                  ),
-                  ShowPlaylistButton(_player),
+                  PlaylistButton(_player),
+                  SpeedButton(_player),
                 ],
               ),
 
@@ -818,13 +799,73 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _player.setAudioSources(playlist);
   }
 }
+//
+class PlaylistButton extends StatelessWidget {
+  final AudioPlayer _player;
+  const PlaylistButton(this._player, {super.key});
 
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+        onPressed: () {
+          showModalBottomSheet<void>(
+            context: context,
+            builder: (BuildContext context) {
+              return SizedBox( // playlist
+                height: 500,
+                child: StreamBuilder<SequenceState?>(
+                  stream: _player.sequenceStateStream,
+                  builder: (context, snapshot) {
+                    final state = snapshot.data;
+                    final sequence = state?.sequence ?? [];
+                    return ReorderableListView(
+                      onReorder: (int oldIndex, int newIndex) {
+                        if (oldIndex < newIndex) newIndex--;
+                        _player.moveAudioSource(oldIndex, newIndex);
+                      },
+                      children: [
+                        for (var i = 0; i < sequence.length; i++)
+                          Dismissible(
+                            key: ValueKey(sequence[i]),
+                            background: Container(
+                              color: Colors.redAccent,
+                              alignment: Alignment.centerRight,
+                              child: const Padding(
+                                padding: EdgeInsets.only(right: 8.0),
+                                child: Icon(Icons.delete, color: Colors.white),
+                              ),
+                            ),
+                            onDismissed: (dismissDirection) =>
+                                _player.removeAudioSourceAt(i),
+                            child: Material(
+                              color: i == state!.currentIndex
+                                  ? Colors.grey.shade300
+                                  : null,
+                              child: ListTile(
+                                title: Text(sequence[i].tag.title as String),
+                                onTap: () => _player
+                                    .seek(Duration.zero, index: i)
+                                    .catchError((e, st) {}),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              );
+            },
+          );
+        },
+        icon: const Icon(Icons.queue_music));
+  }
+}
 //
 enum SingingCharacter { lafayette, jefferson }
 
-class ShowPlaylistButton extends StatelessWidget {
+class SpeedButton extends StatelessWidget {
   final AudioPlayer player;
-  const ShowPlaylistButton(this.player, {super.key});
+  const SpeedButton(this.player, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -858,6 +899,30 @@ class ShowPlaylistButton extends StatelessWidget {
                         title: const Text('0.4'),
                         leading: Radio(
                           value: 0.4,
+                          groupValue: [0.2, 0.4],
+                          onChanged: (v) {},
+                        ),
+                      ),
+                      ListTile(
+                        title: const Text('0.6'),
+                        leading: Radio(
+                          value: 0.6,
+                          groupValue: [0.2, 0.4],
+                          onChanged: (v) {},
+                        ),
+                      ),
+                      ListTile(
+                        title: const Text('0.8'),
+                        leading: Radio(
+                          value: 0.8,
+                          groupValue: [0.2, 0.4],
+                          onChanged: (v) {},
+                        ),
+                      ),
+                      ListTile(
+                        title: const Text('1.0'),
+                        leading: Radio(
+                          value: 1.0,
                           groupValue: [0.2, 0.4],
                           onChanged: (v) {},
                         ),
