@@ -206,133 +206,32 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                               icon: const Icon(Icons.playlist_add),
                               tooltip: 'Add to playlist',
                               onPressed: () {
-                                _scaffoldMessengerKey.currentState?.showSnackBar(
-                                  SnackBar(
-                                    content: Text("Play file : ${currentFile.name}"),
-                                    duration: const Duration(seconds: 1),
-                                  ),
-                                );
+                                _scaffoldMessengerKey.currentState
+                                    ?.showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          "Play file : ${currentFile.name}",
+                                        ),
+                                        duration: const Duration(seconds: 1),
+                                      ),
+                                    );
                               },
                             ),
                             onTap: () {
                               _scaffoldMessengerKey.currentState?.showSnackBar(
                                 SnackBar(
-                                  content: Text("Tap file : ${currentFile.name}"),
+                                  content: Text(
+                                    "Tap file : ${currentFile.name}",
+                                  ),
                                   duration: const Duration(seconds: 1),
                                 ),
                               );
                               playAudio(currentFile);
-                            }
+                            },
                           );
                         },
                       ),
               ),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      "Playlist",
-                      style: Theme.of(context).textTheme.titleLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  StreamBuilder<LoopMode>(
-                    stream: _player.loopModeStream,
-                    builder: (context, snapshot) {
-                      final loopMode = snapshot.data ?? LoopMode.off;
-                      const icons = [
-                        Icon(Icons.repeat, color: Colors.grey),
-                        Icon(Icons.repeat, color: Colors.orange),
-                        Icon(Icons.repeat_one, color: Colors.orange),
-                      ];
-                      const cycleModes = [
-                        LoopMode.off,
-                        LoopMode.all,
-                        LoopMode.one,
-                      ];
-                      final index = cycleModes.indexOf(loopMode);
-                      return IconButton(
-                        icon: icons[index],
-                        onPressed: () {
-                          _player.setLoopMode(
-                            cycleModes[(cycleModes.indexOf(loopMode) + 1) %
-                                cycleModes.length],
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  StreamBuilder<bool>(
-                    stream: _player.shuffleModeEnabledStream,
-                    builder: (context, snapshot) {
-                      final shuffleModeEnabled = snapshot.data ?? false;
-                      return IconButton(
-                        icon: shuffleModeEnabled
-                            ? const Icon(Icons.shuffle, color: Colors.orange)
-                            : const Icon(Icons.shuffle, color: Colors.grey),
-                        onPressed: () async {
-                          final enable = !shuffleModeEnabled;
-                          if (enable) {
-                            await _player.shuffle();
-                          }
-                          await _player.setShuffleModeEnabled(enable);
-                        },
-                      );
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.playlist_remove),
-                    tooltip: 'Clear All',
-                    onPressed: () {
-                      _player.stop();
-                      _player.clearAudioSources();
-                    },
-                  ),
-                ],
-              ),
-              // SizedBox( // playlist
-              //   height: 240.0,
-              //   child: StreamBuilder<SequenceState?>(
-              //     stream: _player.sequenceStateStream,
-              //     builder: (context, snapshot) {
-              //       final state = snapshot.data;
-              //       final sequence = state?.sequence ?? [];
-              //       return ReorderableListView(
-              //         onReorder: (int oldIndex, int newIndex) {
-              //           if (oldIndex < newIndex) newIndex--;
-              //           _player.moveAudioSource(oldIndex, newIndex);
-              //         },
-              //         children: [
-              //           for (var i = 0; i < sequence.length; i++)
-              //             Dismissible(
-              //               key: ValueKey(sequence[i]),
-              //               background: Container(
-              //                 color: Colors.redAccent,
-              //                 alignment: Alignment.centerRight,
-              //                 child: const Padding(
-              //                   padding: EdgeInsets.only(right: 8.0),
-              //                   child: Icon(Icons.delete, color: Colors.white),
-              //                 ),
-              //               ),
-              //               onDismissed: (dismissDirection) =>
-              //                   _player.removeAudioSourceAt(i),
-              //               child: Material(
-              //                 color: i == state!.currentIndex
-              //                     ? Colors.grey.shade300
-              //                     : null,
-              //                 child: ListTile(
-              //                   title: Text(sequence[i].tag.title as String),
-              //                   onTap: () => _player
-              //                       .seek(Duration.zero, index: i)
-              //                       .catchError((e, st) {}),
-              //                 ),
-              //               ),
-              //             ),
-              //         ],
-              //       );
-              //     },
-              //   ),
-              // ),
               StreamBuilder<SequenceState?>(
                 stream: _player.sequenceStateStream,
                 builder: (context, snapshot) {
@@ -487,7 +386,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   IconButton(
                     icon: const Icon(Icons.lyrics),
                     onPressed: () {
-                      fromLrc();
+                      mockfromLrc();
                     },
                   ),
                   PlaylistButton(_player),
@@ -628,7 +527,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return '${_formatDuration(start)} - ${_formatDuration(end)}';
   }
 
-  fromLrc() {
+  mockfromLrc() {
     List<AudioSource> lrcList = [
       ...List.generate(9, (index) {
         return ClippingAudioSource(
@@ -766,7 +665,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   playAllAudios() async {
-
     List<AudioSource> newSources = [];
 
     for (PlatformFile file in audioFiles) {
@@ -786,19 +684,17 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   playAudio(PlatformFile audio) async {
-
     List<AudioSource> playlist = [
-      AudioSource.uri(Uri.file(audio.path!),
-        tag: MediaItem(
-          id: audio.name,
-          title: audio.name,
-        ),
-      )
+      AudioSource.uri(
+        Uri.file(audio.path!),
+        tag: MediaItem(id: audio.name, title: audio.name),
+      ),
     ];
 
     _player.setAudioSources(playlist);
   }
 }
+
 //
 class PlaylistButton extends StatelessWidget {
   final AudioPlayer _player;
@@ -807,59 +703,135 @@ class PlaylistButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-        onPressed: () {
-          showModalBottomSheet<void>(
-            context: context,
-            builder: (BuildContext context) {
-              return SizedBox( // playlist
-                height: 500,
-                child: StreamBuilder<SequenceState?>(
-                  stream: _player.sequenceStateStream,
-                  builder: (context, snapshot) {
-                    final state = snapshot.data;
-                    final sequence = state?.sequence ?? [];
-                    return ReorderableListView(
-                      onReorder: (int oldIndex, int newIndex) {
-                        if (oldIndex < newIndex) newIndex--;
-                        _player.moveAudioSource(oldIndex, newIndex);
+      onPressed: () {
+        showModalBottomSheet<void>(
+          context: context,
+          builder: (BuildContext context) {
+            return Column(
+              children: [
+                //
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Playlist",
+                        style: Theme.of(context).textTheme.titleLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    StreamBuilder<LoopMode>(
+                      stream: _player.loopModeStream,
+                      builder: (context, snapshot) {
+                        final loopMode = snapshot.data ?? LoopMode.off;
+                        const icons = [
+                          Icon(Icons.repeat, color: Colors.grey),
+                          Icon(Icons.repeat, color: Colors.orange),
+                          Icon(Icons.repeat_one, color: Colors.orange),
+                        ];
+                        const cycleModes = [
+                          LoopMode.off,
+                          LoopMode.all,
+                          LoopMode.one,
+                        ];
+                        final index = cycleModes.indexOf(loopMode);
+                        return IconButton(
+                          icon: icons[index],
+                          onPressed: () {
+                            _player.setLoopMode(
+                              cycleModes[(cycleModes.indexOf(loopMode) + 1) %
+                                  cycleModes.length],
+                            );
+                          },
+                        );
                       },
-                      children: [
-                        for (var i = 0; i < sequence.length; i++)
-                          Dismissible(
-                            key: ValueKey(sequence[i]),
-                            background: Container(
-                              color: Colors.redAccent,
-                              alignment: Alignment.centerRight,
-                              child: const Padding(
-                                padding: EdgeInsets.only(right: 8.0),
-                                child: Icon(Icons.delete, color: Colors.white),
-                              ),
-                            ),
-                            onDismissed: (dismissDirection) =>
-                                _player.removeAudioSourceAt(i),
-                            child: Material(
-                              color: i == state!.currentIndex
-                                  ? Colors.grey.shade300
-                                  : null,
-                              child: ListTile(
-                                title: Text(sequence[i].tag.title as String),
-                                onTap: () => _player
-                                    .seek(Duration.zero, index: i)
-                                    .catchError((e, st) {}),
-                              ),
-                            ),
-                          ),
-                      ],
-                    );
-                  },
+                    ),
+                    StreamBuilder<bool>(
+                      stream: _player.shuffleModeEnabledStream,
+                      builder: (context, snapshot) {
+                        final shuffleModeEnabled = snapshot.data ?? false;
+                        return IconButton(
+                          icon: shuffleModeEnabled
+                              ? const Icon(Icons.shuffle, color: Colors.orange)
+                              : const Icon(Icons.shuffle, color: Colors.grey),
+                          onPressed: () async {
+                            final enable = !shuffleModeEnabled;
+                            if (enable) {
+                              await _player.shuffle();
+                            }
+                            await _player.setShuffleModeEnabled(enable);
+                          },
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.playlist_remove),
+                      tooltip: 'Clear All',
+                      onPressed: () {
+                        _player.stop();
+                        _player.clearAudioSources();
+                      },
+                    ),
+                  ],
                 ),
-              );
-            },
-          );
-        },
-        icon: const Icon(Icons.queue_music));
+                //
+                SizedBox(
+                  // playlist
+                  height: 400,
+                  child: StreamBuilder<SequenceState?>(
+                    stream: _player.sequenceStateStream,
+                    builder: (context, snapshot) {
+                      final state = snapshot.data;
+                      final sequence = state?.sequence ?? [];
+                      return ReorderableListView(
+                        onReorder: (int oldIndex, int newIndex) {
+                          if (oldIndex < newIndex) newIndex--;
+                          _player.moveAudioSource(oldIndex, newIndex);
+                        },
+                        children: [
+                          for (var i = 0; i < sequence.length; i++)
+                            Dismissible(
+                              key: ValueKey(sequence[i]),
+                              background: Container(
+                                color: Colors.redAccent,
+                                alignment: Alignment.centerRight,
+                                child: const Padding(
+                                  padding: EdgeInsets.only(right: 8.0),
+                                  child: Icon(
+                                    Icons.delete,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              onDismissed: (dismissDirection) =>
+                                  _player.removeAudioSourceAt(i),
+                              child: Material(
+                                color: i == state!.currentIndex
+                                    ? Colors.grey.shade300
+                                    : null,
+                                child: ListTile(
+                                  title: Text(sequence[i].tag.title as String),
+                                  onTap: () => _player
+                                      .seek(Duration.zero, index: i)
+                                      .catchError((e, st) {}),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                //
+              ],
+            );
+          },
+        );
+      },
+      icon: const Icon(Icons.queue_music),
+    );
   }
 }
+
 //
 enum SingingCharacter { lafayette, jefferson }
 
