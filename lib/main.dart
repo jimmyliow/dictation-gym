@@ -35,20 +35,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Duration clipEndDuration = Duration.zero;
   List<Lyric> lyrics = [];
   List<PlatformFile> audioFiles = [];
-
-  final UriAudioSource gettingAVisa = AudioSource.uri(
-    Uri.parse(
-      "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3",
-    ),
-  );
-  late final List<AudioSource> _playlist = [
-    // AudioSource.uri(Uri.parse("https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3"),
-    //   tag: MediaItem(
-    //     id: "21-getting-a-visa",
-    //     title: "21-getting-a-visa",
-    //   ),
-    // )
-  ];
+  late final List<AudioSource> _playlist = [];
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
@@ -159,8 +146,10 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 MenuItemButton(onPressed: () {}, child: const Text('Revert')),
                 MenuItemButton(onPressed: () {}, child: const Text('Setting')),
                 MenuItemButton(
-                  onPressed: () {},
-                  child: const Text('Send Feedback'),
+                  onPressed: () {
+                    mockfromLrc();
+                  },
+                  child: const Text('Mock playlist'),
                 ),
               ],
               builder: (_, MenuController controller, Widget? child) {
@@ -414,14 +403,12 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   IconButton(
                     icon: const Icon(Icons.lyrics),
                     onPressed: () {
-                      mockfromLrc();
                     },
                   ),
                   PlaylistButton(_player),
                   SpeedButton(_player),
                 ],
               ),
-
               Expanded(
                 child: lyrics.isEmpty
                     ? Text(
@@ -556,6 +543,11 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   mockfromLrc() {
+    final UriAudioSource gettingAVisa = AudioSource.uri(
+      Uri.parse(
+        "https://dailydictation.com/upload/english-conversations/21-getting-a-visa-2022-03-07-21-11-20/0-21-getting-a-visa.mp3",
+      ),
+    );
     List<AudioSource> lrcList = [
       ...List.generate(9, (index) {
         return ClippingAudioSource(
@@ -630,7 +622,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     final lrcContent = await lrcFile.readAsString();
 
     final parsedLyrics = _parseLrcContent(lrcContent);
-    print("lrc: $parsedLyrics");
+
     setState(() {
       lyrics = parsedLyrics;
     });
@@ -709,6 +701,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
 
     _player.setAudioSources(newSources);
+    _player.play();
   }
 
   playAudio(PlatformFile audio) async {
@@ -720,6 +713,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     ];
 
     _player.setAudioSources(playlist);
+    _player.play();
   }
 }
 
@@ -731,13 +725,13 @@ class PlaylistButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
+      icon: const Icon(Icons.queue_music),
       onPressed: () {
         showModalBottomSheet<void>(
           context: context,
           builder: (BuildContext context) {
             return Column(
               children: [
-                //
                 Row(
                   children: [
                     Expanded(
@@ -801,9 +795,7 @@ class PlaylistButton extends StatelessWidget {
                     ),
                   ],
                 ),
-                //
-                SizedBox(
-                  // playlist
+                SizedBox( // playlist
                   height: 400,
                   child: StreamBuilder<SequenceState?>(
                     stream: _player.sequenceStateStream,
@@ -855,7 +847,6 @@ class PlaylistButton extends StatelessWidget {
           },
         );
       },
-      icon: const Icon(Icons.queue_music),
     );
   }
 }
