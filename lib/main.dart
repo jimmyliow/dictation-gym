@@ -94,8 +94,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     //   await _player.setSpeed(1.0);
     // }
 
-    final source = sequence[index];
-    final metadata = source.tag as MediaItem;
+    // final source = sequence[index];
+    // final metadata = source.tag as MediaItem;
     // _scaffoldMessengerKey.currentState?.showSnackBar(
     //   SnackBar(
     //     content: Text('Finished playing ${metadata.title} - $index'),
@@ -133,17 +133,12 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
             IconButton(
               icon: const Icon(Icons.dehaze),
               tooltip: 'Setup',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('This is a snackbar')),
-                );
-              },
+              onPressed: () {},
             ),
             //
             MenuAnchor(
               childFocusNode: _buttonFocusNode,
               menuChildren: <Widget>[
-                MenuItemButton(onPressed: () {}, child: const Text('Revert')),
                 MenuItemButton(onPressed: () {}, child: const Text('Setting')),
                 MenuItemButton(
                   onPressed: () {
@@ -215,6 +210,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                         itemBuilder: (context, index) {
                           final currentFile = audioFiles[index];
                           return ListTile(
+                            leading: Text('${index + 1}'),
                             title: Text(
                               currentFile.name,
                               style: const TextStyle(fontSize: 16),
@@ -400,84 +396,15 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       pickLrc();
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.lyrics),
-                    onPressed: () {
-                    },
-                  ),
+                  // IconButton(
+                  //   icon: const Icon(Icons.lyrics),
+                  //   onPressed: () {
+                  //   },
+                  // ),
+                  LyricsButton(lyrics),
                   PlaylistButton(_player),
-                  SpeedButton(_player),
+                  SpeedMenu(),
                 ],
-              ),
-              Expanded(
-                child: lyrics.isEmpty
-                    ? Text(
-                        'Lyrics is empty',
-                        style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.only(top: 16, bottom: 80),
-                        itemCount: lyrics.length,
-                        itemBuilder: (context, index) {
-                          final lyric = lyrics[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 6,
-                            ),
-                            child: ListTile(
-                              leading: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.deepPurple[50],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '${index + 1}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple,
-                                  ),
-                                ),
-                              ),
-                              title: Text(
-                                lyric.text,
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  _formatTimeRange(
-                                    lyric.startTime,
-                                    lyric.endTime,
-                                  ),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ),
-                              trailing: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue[50],
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  '${lyric.endTime.inMilliseconds - lyric.startTime.inMilliseconds}ms',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.blue[700],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
               ),
             ],
           ),
@@ -716,6 +643,113 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _player.play();
   }
 }
+//
+
+//
+class LyricsButton extends StatelessWidget {
+  final List _lyrics;
+  const LyricsButton(this._lyrics, {super.key});
+
+  String _formatDuration(Duration d) {
+    return '${d.inMinutes}:${(d.inSeconds % 60).toString().padLeft(2, '0')}.${(d.inMilliseconds % 1000).toString().padLeft(3, '0')}';
+  }
+
+  String _formatTimeRange(Duration start, Duration end) {
+    return '${_formatDuration(start)} - ${_formatDuration(end)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.lyrics),
+      onPressed: () {
+        showModalBottomSheet<void>(
+          context: context,
+          builder: (BuildContext context) {
+            return Expanded(
+              child: _lyrics.isEmpty
+                  ? SizedBox(
+                      width: 200,
+                      height: 60,
+                      child: Text(
+                        'Lyrics is empty',
+                        style: Theme.of(context).textTheme.titleLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : SizedBox(
+                      height: 400,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(top: 16, bottom: 80),
+                        itemCount: _lyrics.length,
+                        itemBuilder: (context, index) {
+                          final lyric = _lyrics[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            child: ListTile(
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.deepPurple[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${index + 1}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                lyric.text,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  _formatTimeRange(
+                                    lyric.startTime,
+                                    lyric.endTime,
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue[50],
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '${lyric.endTime.inMilliseconds - lyric.startTime.inMilliseconds}ms',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.blue[700],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
 
 //
 class PlaylistButton extends StatelessWidget {
@@ -795,7 +829,8 @@ class PlaylistButton extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox( // playlist
+                SizedBox(
+                  // playlist
                   height: 400,
                   child: StreamBuilder<SequenceState?>(
                     stream: _player.sequenceStateStream,
@@ -852,14 +887,14 @@ class PlaylistButton extends StatelessWidget {
 }
 
 //
-class MyCascadingMenu extends StatefulWidget {
-  const MyCascadingMenu({super.key});
+class SpeedMenu extends StatefulWidget {
+  const SpeedMenu({super.key});
 
   @override
-  State<MyCascadingMenu> createState() => _MyCascadingMenuState();
+  State<SpeedMenu> createState() => SpeedMenuMenuState();
 }
 
-class _MyCascadingMenuState extends State<MyCascadingMenu> {
+class SpeedMenuMenuState extends State<SpeedMenu> {
   final FocusNode _buttonFocusNode = FocusNode(debugLabel: 'Menu Button');
 
   @override
@@ -873,7 +908,12 @@ class _MyCascadingMenuState extends State<MyCascadingMenu> {
     return MenuAnchor(
       childFocusNode: _buttonFocusNode,
       menuChildren: <Widget>[
-        MenuItemButton(onPressed: () {}, child: const Text('0.2')),
+        MenuItemButton(
+          onPressed: () {
+            // player
+          },
+          child: const Text('0.2'),
+        ),
         MenuItemButton(onPressed: () {}, child: const Text('0.4')),
         MenuItemButton(onPressed: () {}, child: const Text('0.6')),
         MenuItemButton(onPressed: () {}, child: const Text('0.8')),
@@ -892,29 +932,13 @@ class _MyCascadingMenuState extends State<MyCascadingMenu> {
               controller.open();
             }
           },
-          icon: const Icon(Icons.more_vert),
+          icon: const Icon(Icons.speed),
         );
       },
     );
   }
 }
 //
-enum SingingCharacter { lafayette, jefferson }
-
-class SpeedButton extends StatelessWidget {
-  final AudioPlayer player;
-  const SpeedButton(this.player, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        MyCascadingMenu(),
-      ],
-    );
-  }
-}
 
 //
 class ControlButtons extends StatelessWidget {
