@@ -107,7 +107,7 @@ class SeekBarState extends State<SeekBar> {
           right: 16.0,
           bottom: 0.0,
           child: Text(
-            _formatDuration(_remaining),
+            _formatDuration(widget.duration),
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),

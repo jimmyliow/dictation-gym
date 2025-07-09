@@ -320,7 +320,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.loop),
+                    icon: const Icon(Icons.start),
                     onPressed: () {
                       final currentIndex = _player.currentIndex;
 
@@ -334,10 +334,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                             start: clipStartDuration,
                             end: clipEndDuration,
                             child: currentSource,
-                            tag: MediaItem(
-                              id: 'Clipping Audio',
-                              title: "Clipping Audio",
-                            ),
+                            tag: currentSource.tag,
                           ),
                         ];
                         _player.setAudioSources(a);
@@ -385,7 +382,11 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       delayedStop();
                     },
                   ),
-                  IconButton(icon: const Icon(Icons.fitbit), onPressed: () {}),
+                  IconButton(
+                    icon: const Icon(Icons.hearing),
+                    onPressed: () {
+                    },
+                  ),
                   IconButton(
                     icon: const Icon(Icons.fitness_center),
                     onPressed: () {},
@@ -666,83 +667,71 @@ class LyricsButton extends StatelessWidget {
         showModalBottomSheet<void>(
           context: context,
           builder: (BuildContext context) {
-            return Expanded(
-              child: _lyrics.isEmpty
-                  ? SizedBox(
-                      width: 200,
-                      height: 60,
-                      child: Text(
-                        'Lyrics is empty',
-                        style: Theme.of(context).textTheme.titleLarge,
-                        textAlign: TextAlign.center,
+            return SizedBox(
+              height: 600,
+              child: ListView.builder(
+                padding: const EdgeInsets.only(top: 16, bottom: 80),
+                itemCount: _lyrics.length,
+                itemBuilder: (context, index) {
+                  final lyric = _lyrics[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    child: ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.deepPurple[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${index + 1}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.deepPurple,
+                          ),
+                        ),
                       ),
-                    )
-                  : SizedBox(
-                      height: 400,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.only(top: 16, bottom: 80),
-                        itemCount: _lyrics.length,
-                        itemBuilder: (context, index) {
-                          final lyric = _lyrics[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 6,
-                            ),
-                            child: ListTile(
-                              leading: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.deepPurple[50],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '${index + 1}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple,
-                                  ),
-                                ),
-                              ),
-                              title: Text(
-                                lyric.text,
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  _formatTimeRange(
-                                    lyric.startTime,
-                                    lyric.endTime,
-                                  ),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ),
-                              trailing: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue[50],
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  '${lyric.endTime.inMilliseconds - lyric.startTime.inMilliseconds}ms',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.blue[700],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+                      title: Text(
+                        lyric.text,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          _formatTimeRange(
+                            lyric.startTime,
+                            lyric.endTime,
+                          ),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '${lyric.endTime.inMilliseconds - lyric.startTime.inMilliseconds}ms',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.blue[700],
+                          ),
+                        ),
                       ),
                     ),
+                  );
+                },
+              ),
             );
           },
         );
