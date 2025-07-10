@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'media_kit_stub.dart' if (dart.library.io) 'media_kit_impl.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +38,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Duration clipStartDuration = Duration.zero;
   Duration clipEndDuration = Duration.zero;
   List<Lyric> lyrics = [];
-  List<PlatformFile> audioFiles = [];
+  List<AudioFile> audioFiles = [];
   late final List<AudioSource> _playlist = [];
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -74,6 +78,19 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       if (state == ProcessingState.completed) {
         _showItemFinished(_player.currentIndex);
       }
+    });
+    loadAudioFiles();
+  }
+
+  Future<void> loadAudioFiles() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = prefs.getStringList('audio_files') ?? [];
+    List<AudioFile> selectedFiles = jsonList
+        .map((jsonStr) => AudioFile.fromJson(jsonDecode(jsonStr)))
+        .toList();
+
+    setState(() {
+      audioFiles = selectedFiles;
     });
   }
 
@@ -215,6 +232,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                               currentFile.name,
                               style: const TextStyle(fontSize: 16),
                             ),
+                            subtitle: Text(currentFile.path ?? 'Empty'),
                             trailing: IconButton(
                               icon: const Icon(Icons.playlist_add),
                               tooltip: 'Add to playlist',
@@ -382,11 +400,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       delayedStop();
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.hearing),
-                    onPressed: () {
-                    },
-                  ),
+                  IconButton(icon: const Icon(Icons.hearing), onPressed: () {}),
                   IconButton(
                     icon: const Icon(Icons.fitness_center),
                     onPressed: () {},
@@ -397,11 +411,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       pickLrc();
                     },
                   ),
-                  // IconButton(
-                  //   icon: const Icon(Icons.lyrics),
-                  //   onPressed: () {
-                  //   },
-                  // ),
                   LyricsButton(lyrics),
                   PlaylistButton(_player),
                   SpeedMenu(),
@@ -575,7 +584,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return null;
   }
 
-  Future<String?> pickAudioFiles() async {
+  Future<void> pickAudioFiles() async {
     if (Platform.isAndroid || Platform.isIOS) {
       final status = await Permission.storage.request();
       if (!status.isGranted) return null;
@@ -587,14 +596,15 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     );
     if (result == null || result.files.isEmpty) return null;
 
-    List<PlatformFile> selectedFiles = [];
+    List<AudioFile> selectedFiles = [];
 
     List<AudioSource> newSources = [];
     for (PlatformFile file in result.files) {
       if (file.path == null) continue;
 
       String fileName = file.name;
-      selectedFiles.add(file);
+      // AudioFile(path: json['path'], name: json['name'])
+      selectedFiles.add(AudioFile(path: file.path ?? 'Empty', name: file.name));
 
       AudioSource source = AudioSource.uri(
         Uri.file(file.path!),
@@ -609,13 +619,17 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     });
     _player.setAudioSources(newSources);
 
-    return null;
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = selectedFiles
+        .map((file) => jsonEncode(file.toJson()))
+        .toList();
+    await prefs.setStringList('audio_files', jsonList);
   }
 
   playAllAudios() async {
     List<AudioSource> newSources = [];
 
-    for (PlatformFile file in audioFiles) {
+    for (AudioFile file in audioFiles) {
       if (file.path == null) continue;
 
       String fileName = file.name;
@@ -632,10 +646,10 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _player.play();
   }
 
-  playAudio(PlatformFile audio) async {
+  playAudio(AudioFile audio) async {
     List<AudioSource> playlist = [
       AudioSource.uri(
-        Uri.file(audio.path!),
+        Uri.file(audio.path),
         tag: MediaItem(id: audio.name, title: audio.name),
       ),
     ];
@@ -701,10 +715,7 @@ class LyricsButton extends StatelessWidget {
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          _formatTimeRange(
-                            lyric.startTime,
-                            lyric.endTime,
-                          ),
+                          _formatTimeRange(lyric.startTime, lyric.endTime),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -901,15 +912,15 @@ class SpeedMenuMenuState extends State<SpeedMenu> {
           onPressed: () {
             // player
           },
-          child: const Text('0.2'),
+          child: const Text('0.2x'),
         ),
-        MenuItemButton(onPressed: () {}, child: const Text('0.4')),
-        MenuItemButton(onPressed: () {}, child: const Text('0.6')),
-        MenuItemButton(onPressed: () {}, child: const Text('0.8')),
-        MenuItemButton(onPressed: () {}, child: const Text('1.0')),
-        MenuItemButton(onPressed: () {}, child: const Text('1.2')),
-        MenuItemButton(onPressed: () {}, child: const Text('1.5')),
-        MenuItemButton(onPressed: () {}, child: const Text('2.0')),
+        MenuItemButton(onPressed: () {}, child: const Text('0.4x')),
+        MenuItemButton(onPressed: () {}, child: const Text('0.6x')),
+        MenuItemButton(onPressed: () {}, child: const Text('0.8x')),
+        MenuItemButton(onPressed: () {}, child: const Text('1.0x')),
+        MenuItemButton(onPressed: () {}, child: const Text('1.2x')),
+        MenuItemButton(onPressed: () {}, child: const Text('1.5x')),
+        MenuItemButton(onPressed: () {}, child: const Text('2.0x')),
       ],
       builder: (_, MenuController controller, Widget? child) {
         return IconButton(
@@ -1033,4 +1044,18 @@ class Lyric {
   final String text;
 
   Lyric(this.startTime, this.endTime, this.text);
+}
+
+class AudioFile {
+  final String path;
+  final String name;
+
+  AudioFile({required this.path, required this.name});
+
+  // 序列化为JSON
+  Map<String, dynamic> toJson() => {'path': path, 'name': name};
+
+  // 从JSON反序列化
+  factory AudioFile.fromJson(Map<String, dynamic> json) =>
+      AudioFile(path: json['path'], name: json['name']);
 }
