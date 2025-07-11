@@ -34,6 +34,7 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   late AudioPlayer _player;
+  String _playMode = 'Empty';
   final FocusNode _buttonFocusNode = FocusNode(debugLabel: 'Menu Button');
   Duration clipStartDuration = Duration.zero;
   Duration clipEndDuration = Duration.zero;
@@ -101,24 +102,17 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     if (index >= sequence.length) return;
 
-    // aₙ = 9n + 2
-    // x >= 2 && (x - 2) % 9 === 0;
-    // if (index >= 2 && (index - 2) % 9 == 0) {
-    //   await Future.delayed(Duration.zero);
-    //   await _player.setSpeed(0.6);
-    // } else if (index >= 5 && (index - 5) % 9 == 0) {
-    //   await Future.delayed(Duration.zero);
-    //   await _player.setSpeed(1.0);
-    // }
-
-    // final source = sequence[index];
-    // final metadata = source.tag as MediaItem;
-    // _scaffoldMessengerKey.currentState?.showSnackBar(
-    //   SnackBar(
-    //     content: Text('Finished playing ${metadata.title} - $index'),
-    //     duration: const Duration(seconds: 1),
-    //   ),
-    // );
+    if (_playMode == 'fines') {
+      // aₙ = 9n + 2
+      // x >= 2 && (x - 2) % 9 === 0;
+      if (index >= 0 && (index) % 3 == 0) {
+        await Future.delayed(Duration.zero);
+        await _player.setSpeed(0.8);
+      } else if (index >= 1 && (index - 1) % 3 == 0) {
+        await Future.delayed(Duration.zero);
+        await _player.setSpeed(1.0);
+      }
+    }
   }
 
   @override
@@ -232,7 +226,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                               currentFile.name,
                               style: const TextStyle(fontSize: 16),
                             ),
-                            subtitle: Text(currentFile.path ?? 'Empty'),
+                            subtitle: Text(currentFile.path),
                             trailing: IconButton(
                               icon: const Icon(Icons.playlist_add),
                               tooltip: 'Add to playlist',
@@ -403,7 +397,10 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   IconButton(icon: const Icon(Icons.hearing), onPressed: () {}),
                   IconButton(
                     icon: const Icon(Icons.fitness_center),
-                    onPressed: () {},
+                    onPressed: () {
+                      //
+                      fitnessMode();
+                    },
                   ),
                   IconButton(
                     icon: const Icon(Icons.autofps_select),
@@ -475,10 +472,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return '${d.inMinutes}:${(d.inSeconds % 60).toString().padLeft(2, '0')}.${(d.inMilliseconds % 1000).toString().padLeft(3, '0')}';
   }
 
-  String _formatTimeRange(Duration start, Duration end) {
-    return '${_formatDuration(start)} - ${_formatDuration(end)}';
-  }
-
   mockfromLrc() {
     final UriAudioSource gettingAVisa = AudioSource.uri(
       Uri.parse(
@@ -525,6 +518,27 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     ];
 
     _player.setAudioSources(lrcList);
+  }
+
+  Future<void> fitnessMode() async {
+    _player.stop();
+    List<AudioSource> newSources = [];
+
+    for (AudioFile file in audioFiles) {
+      String fileName = file.name;
+      List<AudioSource> repeatSource = List.generate(3, (index) {
+        return AudioSource.uri(
+          Uri.file(file.path),
+          tag: MediaItem(id: fileName, title: fileName),
+        );
+      });
+
+      newSources.addAll(repeatSource);
+    }
+    _playMode = 'fines';
+    _player.setLoopMode(LoopMode.all);
+    _player.setAudioSources(newSources);
+    _player.play();
   }
 
   Future<void> delayedStop() async {
@@ -587,14 +601,14 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Future<void> pickAudioFiles() async {
     if (Platform.isAndroid || Platform.isIOS) {
       final status = await Permission.storage.request();
-      if (!status.isGranted) return null;
+      if (!status.isGranted) return;
     }
 
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       type: FileType.audio,
     );
-    if (result == null || result.files.isEmpty) return null;
+    if (result == null || result.files.isEmpty) return;
 
     List<AudioFile> selectedFiles = [];
 
@@ -603,7 +617,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       if (file.path == null) continue;
 
       String fileName = file.name;
-      // AudioFile(path: json['path'], name: json['name'])
       selectedFiles.add(AudioFile(path: file.path ?? 'Empty', name: file.name));
 
       AudioSource source = AudioSource.uri(
@@ -630,18 +643,16 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     List<AudioSource> newSources = [];
 
     for (AudioFile file in audioFiles) {
-      if (file.path == null) continue;
-
       String fileName = file.name;
-
       AudioSource source = AudioSource.uri(
-        Uri.file(file.path!),
+        Uri.file(file.path),
         tag: MediaItem(id: fileName, title: fileName),
       );
 
       newSources.add(source);
     }
 
+    _playMode = 'Empty';
     _player.setAudioSources(newSources);
     _player.play();
   }
@@ -658,8 +669,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _player.play();
   }
 }
-//
-
 //
 class LyricsButton extends StatelessWidget {
   final List _lyrics;
