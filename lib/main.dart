@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'media_kit_stub.dart' if (dart.library.io) 'media_kit_impl.dart';
@@ -12,6 +13,7 @@ import 'package:dictation_gym/common.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
+import 'package:path/path.dart' as path;
 import 'package:file_picker/file_picker.dart';
 
 Future<void> main() async {
@@ -204,7 +206,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     icon: const Icon(Icons.add),
                     tooltip: 'Add files',
                     onPressed: () {
-                      pickAudioFiles();
+                      // pickAudioFiles();
+                      _pickDirectoryAndReadFiles();
                     },
                   ),
                 ],
@@ -394,7 +397,9 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       delayedStop();
                     },
                   ),
-                  IconButton(icon: const Icon(Icons.hearing), onPressed: () {}),
+                  IconButton(icon: const Icon(Icons.hearing), onPressed: () {
+                    _pickDirectoryAndReadFiles();
+                  }),
                   IconButton(
                     icon: const Icon(Icons.fitness_center),
                     onPressed: () {
@@ -554,6 +559,49 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         await _player.stop();
       }
     });
+  }
+
+  Future<bool> _requestMediaPermission() async {
+    if (Platform.isAndroid) {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      if (androidInfo.version.sdkInt >= 33) { // Android 13+
+        final visualStatus = await Permission.videos.request(); // 实际使用 Permission.mediaLibrary
+        final audioRequest = await Permission.audio.request();
+        return audioRequest.isGranted || visualStatus.isGranted;
+      } else { // Android <13
+        return await Permission.storage.request().isGranted;
+      }
+    }
+    return true; // iOS 或其他平台无需此权限
+  }
+
+  Future<void> _pickDirectoryAndReadFiles() async {
+    _requestMediaPermission();
+    try {
+      // 1. 选择目录（仅桌面/移动端支持）
+      String? selectedDir = await FilePicker.platform.getDirectoryPath();
+      if (selectedDir == null) return;
+
+      // 2. 读取目录下所有文件
+      final dir = Directory(selectedDir);
+      List<File> files = [];
+
+      List<AudioFile> selectedFiles = [];
+      await for (var entity in dir.list(recursive: false)) {
+        if (entity is File) {
+          String filePath = entity.path;
+          String fileName = path.basename(filePath); // 文件名（推荐）
+          String dirName = path.dirname(filePath);    // 所在目录路径
+          selectedFiles.add(
+              AudioFile(path: filePath, name: fileName));
+        }
+      }
+      setState(() {
+        audioFiles = selectedFiles;
+      });
+    } catch (e) {
+      print("Error: $e");
+    }
   }
 
   Future<String?> pickLrc() async {
