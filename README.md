@@ -5,6 +5,8 @@ Dictation Gym's local player is designed to minimize distractions by enabling of
 
 ## Deployment
 
+flutter pub run flutter_launcher_icons
+
 flutter build apk --split-per-abi
 
 flutter build windows

@@ -152,7 +152,9 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
             MenuAnchor(
               childFocusNode: _buttonFocusNode,
               menuChildren: <Widget>[
-                MenuItemButton(onPressed: () {}, child: const Text('Setting')),
+                MenuItemButton(onPressed: () {
+                  _pickDirectoryAndReadFiles();
+                }, child: const Text('Pick dir')),
                 MenuItemButton(
                   onPressed: () {
                     mockfromLrc();
@@ -206,8 +208,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     icon: const Icon(Icons.add),
                     tooltip: 'Add files',
                     onPressed: () {
-                      // pickAudioFiles();
-                      _pickDirectoryAndReadFiles();
+                      pickAudioFiles();
                     },
                   ),
                 ],
@@ -398,7 +399,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     },
                   ),
                   IconButton(icon: const Icon(Icons.hearing), onPressed: () {
-                    _pickDirectoryAndReadFiles();
+                    // _pickDirectoryAndReadFiles();
                   }),
                   IconButton(
                     icon: const Icon(Icons.fitness_center),
@@ -647,10 +648,9 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   Future<void> pickAudioFiles() async {
-    if (Platform.isAndroid || Platform.isIOS) {
-      final status = await Permission.storage.request();
-      if (!status.isGranted) return;
-    }
+    bool mediaPermission = await _requestMediaPermission();
+
+    if (!mediaPermission) return;
 
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
