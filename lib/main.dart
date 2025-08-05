@@ -24,17 +24,17 @@ Future<void> main() async {
     androidNotificationOngoing: true,
   );
   initMediaKit(); // Initialise just_audio_media_kit for Linux/Windows.
-  runApp(MyApp());
+  runApp(HomeApp());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class HomeApp extends StatefulWidget {
+  const HomeApp({super.key});
 
   @override
-  MyAppState createState() => MyAppState();
+  HomeAppState createState() => HomeAppState();
 }
 
-class MyAppState extends State<MyApp> with WidgetsBindingObserver {
+class HomeAppState extends State<HomeApp> with WidgetsBindingObserver {
   late AudioPlayer _player;
   String _playMode = 'Empty';
   final FocusNode _buttonFocusNode = FocusNode(debugLabel: 'Menu Button');
@@ -65,7 +65,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     });
 
     try {
-      _player.setLoopMode(LoopMode.off);
+      _player.setLoopMode(LoopMode.all);
       await _player.setAudioSources(_playlist);
     } on PlayerException catch (e) {
       // Catch load errors: 404, invalid url...
@@ -154,7 +154,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
               menuChildren: <Widget>[
                 MenuItemButton(onPressed: () {
                   _pickDirectoryAndReadFiles();
-                }, child: const Text('Pick dir')),
+                }, child: const Text('Add folder')),
                 MenuItemButton(
                   onPressed: () {
                     mockfromLrc();
@@ -566,9 +566,9 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     if (Platform.isAndroid) {
       final androidInfo = await DeviceInfoPlugin().androidInfo;
       if (androidInfo.version.sdkInt >= 33) { // Android 13+
-        final visualStatus = await Permission.videos.request(); // 实际使用 Permission.mediaLibrary
+        final videoRequest = await Permission.videos.request(); // 实际使用 Permission.mediaLibrary
         final audioRequest = await Permission.audio.request();
-        return audioRequest.isGranted || visualStatus.isGranted;
+        return audioRequest.isGranted || videoRequest.isGranted;
       } else { // Android <13
         return await Permission.storage.request().isGranted;
       }
@@ -577,39 +577,49 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   Future<void> _pickDirectoryAndReadFiles() async {
-    _requestMediaPermission();
-    try {
-      // 1. 选择目录（仅桌面/移动端支持）
-      String? selectedDir = await FilePicker.platform.getDirectoryPath();
-      if (selectedDir == null) return;
+    bool mediaPermission = await _requestMediaPermission();
 
-      // 2. 读取目录下所有文件
-      final dir = Directory(selectedDir);
-      List<File> files = [];
+    if (!mediaPermission) return;
 
-      List<AudioFile> selectedFiles = [];
-      await for (var entity in dir.list(recursive: false)) {
-        if (entity is File) {
-          String filePath = entity.path;
-          String fileName = path.basename(filePath); // 文件名（推荐）
-          String dirName = path.dirname(filePath);    // 所在目录路径
-          selectedFiles.add(
-              AudioFile(path: filePath, name: fileName));
-        }
+    String? selectedDir = await FilePicker.platform.getDirectoryPath();
+    if (selectedDir == null) return;
+
+    final dir = Directory(selectedDir);
+    List<File> files = [];
+
+    List<AudioFile> selectedFiles = [];
+    List<AudioSource> newSources = [];
+
+    await for (var entity in dir.list(recursive: false)) {
+      if (entity is File) {
+        String filePath = entity.path;
+        String fileName = path.basename(filePath); // 文件名（推荐）
+        String dirName = path.dirname(filePath);    // 所在目录路径
+        selectedFiles.add(AudioFile(path: filePath, name: fileName));
+
+        AudioSource source = AudioSource.uri(
+          Uri.file(entity.path),
+          tag: MediaItem(id: fileName, title: fileName),
+        );
+
+        newSources.add(source);
       }
-      setState(() {
-        audioFiles = selectedFiles;
-      });
-    } catch (e) {
-      print("Error: $e");
     }
+    setState(() {
+      audioFiles = selectedFiles;
+    });
+    _player.setAudioSources(newSources);
+
+    final prefs = await SharedPreferences.getInstance();
+    final jsonList = selectedFiles
+        .map((file) => jsonEncode(file.toJson()))
+        .toList();
+    await prefs.setStringList('audio_files', jsonList);
   }
 
-  Future<String?> pickLrc() async {
-    if (Platform.isAndroid || Platform.isIOS) {
-      final status = await Permission.storage.request();
-      if (!status.isGranted) return null;
-    }
+  Future<void> pickLrc() async {
+    bool mediaPermission = await _requestMediaPermission();
+    if (!mediaPermission) return;
 
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
@@ -643,8 +653,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       newSources.add(lrcSource);
     }
     _player.setAudioSources(newSources);
-
-    return null;
   }
 
   Future<void> pickAudioFiles() async {
@@ -659,8 +667,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     if (result == null || result.files.isEmpty) return;
 
     List<AudioFile> selectedFiles = [];
-
     List<AudioSource> newSources = [];
+
     for (PlatformFile file in result.files) {
       if (file.path == null) continue;
 
